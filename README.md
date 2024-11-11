@@ -54,6 +54,8 @@ Here the `dataset` and `dataset_path` refer to the name of the dataset and the p
 The hyperparameters used here are not exactly for reproducing the results. For more details about the settings, experiments and hyperparamters please refer to [our original paper](https://arxiv.org/abs/2410.23008).
 ## 4. Automatically Annotating the New Classes
 
+To be uploaded soon.
+
 ---
 ## Citations
 
