@@ -15,32 +15,53 @@ import soundfile as sf
 import matplotlib.pyplot as plt
 
 from librosa.util.exceptions import ParameterError
+from scipy.interpolate import interp1d
 
 def ensure_directory_exists(directory_path):
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
 
-def mel(audio, sr, image_path):
-    # Save Mel-spectrogram
-    plt.figure(figsize=(10, 10))
 
-    # Generate the Mel spectrogram
-    n_fft = min(2048, len(audio) - 1)
-    S = librosa.feature.melspectrogram(y=audio, sr=sr, n_fft = n_fft)
+# def compute_mfcc(audio, sr):
+#     hop_length = int(0.01 * sr) # 10 ms overlap
+#     win_length = int(0.025 * sr)    # 25 ms window
+#     n_mels = 64 # 64 mel frequency bands
+#     n_mfcc = 64 # extract 64 mfcc coefficients
     
-    # Convert power spectrum to dB scale
-    S_dB = librosa.power_to_db(S, ref=np.max)
+#     # Compute STFT and convert to power spectrogram
+#     S = librosa.stft(audio, n_fft=win_length, hop_length=hop_length, win_length=win_length)
+#     S_power = np.abs(S) ** 2  # Compute power spectrogram
+
+#     # Apply Mel filter banks
+#     mel_spec = librosa.feature.melspectrogram(S=S_power, sr=sr, n_mels=n_mels)
+
+#     # Convert to log scale (log-mel spectrogram)
+#     mel_log = librosa.power_to_db(mel_spec, ref=np.max)
+
+#     # Compute MFCCs from the log-mel spectrogram
+#     mfcc = librosa.feature.mfcc(S=mel_log, sr=sr, n_mfcc=n_mfcc)
+
+#     # Resample MFCC frames to 64 time steps using linear interpolation
+#     num_frames = mfcc.shape[1]
+#     target_frames = 64  # Fixed number of time steps
+
+#     if num_frames != target_frames:
+#         x_old = np.linspace(0, 1, num_frames)
+#         x_new = np.linspace(0, 1, target_frames)
+#         mfcc_resampled = np.array([interp1d(x_old, mfcc[i, :], kind='linear')(x_new) for i in range(n_mfcc)])
+#     else:
+#         mfcc_resampled = mfcc
+
+#     return mfcc_resampled
     
-    # Ensure S_dB is 2D before plotting
-    # if S_dB.ndim == 3 and S_dB.shape[2] == 1:
-    #     S_dB = S_dB.reshape(S_dB.shape[0], S_dB.shape[1])
-    
-    librosa.display.specshow(S_dB, sr=sr, x_axis='time', y_axis='mel', cmap='viridis')
-    plt.axis('off')
-    plt.savefig(image_path, bbox_inches='tight', pad_inches=0, dpi=300)
-    plt.close()
-    
-    return
+# def save_mfcc_image(mfcc, image_path):
+#     """Save the MFCC as an image."""
+#     plt.figure(figsize=(10, 10))
+#     librosa.display.specshow(mfcc, x_axis='time', y_axis='mel', cmap='viridis')
+#     plt.axis('off')
+#     plt.savefig(image_path, bbox_inches='tight', pad_inches=0, dpi=300)
+#     plt.close()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Find classe name for target csv.")
@@ -70,12 +91,14 @@ if __name__ == "__main__":
 
                 # Set paths
                 output_audio_dir = os.path.join(YOUR_AUDIO_DIR, 'audio_vs', class_display_name)
-                output_image_dir = os.path.join(YOUR_AUDIO_DIR, 'mel_vs', class_display_name)
+                output_image_dir = os.path.join(YOUR_AUDIO_DIR, 'mfcc_vs', class_display_name)
                 ensure_directory_exists(output_audio_dir)
                 ensure_directory_exists(output_image_dir)
                 
                 for audio_file_name in tqdm(audio_files, desc="Processing audio files"):
                     audio_signal, sr = librosa.load(audio_dir + '/' + audio_file_name)
+                    
+                    # audio_signal = pad_audio_to_10_seconds(audio_signal, sr)
                     
                     # Compute the spectrogram magnitude and phase
                     S_full, phase = librosa.magphase(librosa.stft(audio_signal))
@@ -120,5 +143,10 @@ if __name__ == "__main__":
                     sf.write(os.path.join(output_audio_dir, f"{audio_file_name[:-4]}_fore.wav"), y_foreground, sr, 'PCM_16')
                     sf.write(os.path.join(output_audio_dir, f"{audio_file_name[:-4]}_back.wav"), y_background, sr, 'PCM_16')
                     
-                    mel(y_foreground, sr, os.path.join(output_image_dir, f"{audio_file_name[:-4]}_fore.png"))
-                    mel(y_background, sr, os.path.join(output_image_dir, f"{audio_file_name[:-4]}_back.png"))
+                    
+                    # Compute and save MFCC images instead of Mel spectrograms
+                    # mfcc_foreground = compute_mfcc(y_foreground, sr)
+                    # mfcc_background = compute_mfcc(y_background, sr)
+
+                    # save_mfcc_image(mfcc_foreground, os.path.join(output_image_dir, f"{audio_file_name[:-4]}_fore.png"))
+                    # save_mfcc_image(mfcc_background, os.path.join(output_image_dir, f"{audio_file_name[:-4]}_back.png"))

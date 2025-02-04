@@ -1,9 +1,21 @@
-# Audio Class Discovery
-Developing new machine learning applications often requires the collection of new datasets. However, existing datasets may already contain relevant information to train models for new purposes. Our proposed framework discovers **new classes** within audio datasets by incorporating (1) an **audio pre-processing pipeline** to decompose different sounds in audio samples, and (2) an automated **model-based annotation mechanism** to identify the discovered classes. These newly discovered classes can then be used for training new downstream applications. Please refer to [our paper](https://arxiv.org/abs/2410.23008) for more details.
+<div id="toc">
+   <ul align="center" style="list-style: none;">
+  <a href="https://github.com/Nokia-Bell-Labs/audio-class-discovery"><img src="assets/ditto_diagram.png"></a>
+  <summary>
+     <h1>SoundCollage</h1> <br>
+    <h2>Automated Discovery of New Classes in Audio Datasets</h2>
+  </summary>
+   </ul>
+</div>
 
-<p align="center">
-    <img src="assets/ditto_diagram.png", align="center"/>
-</p>
+## :rocket: Updates
+- Dec 20th 2024: SoundCollage is accepted to the 2025 IEEE International Conference on Acoustics, Speech, and Signal Processing (ICASSP).
+- Nov 11th 2024: The code is now available!
+- Oct 30th 2024: The paper is available on [Arxiv](https://arxiv.org/abs/2410.23008).
+- Mar 4th 2024: Preliminary study titled "Pushing the Decision Boundaries: Discovering New Classes in Audio Data" accepted at [DMLR@ICLR 2024](https://dmlr.ai/iclr24/accepted/)
+
+## :book: Summary
+Developing new machine learning applications often requires the collection of new datasets. However, existing datasets may already contain relevant information to train models for new purposes. Our proposed framework discovers **new classes** within audio datasets by incorporating (1) an **audio pre-processing pipeline** to decompose different sounds in audio samples, and (2) an automated **model-based annotation mechanism** to identify the discovered classes. These newly discovered classes can then be used for training new downstream applications. Please refer to [our paper](https://arxiv.org/abs/2410.23008) for more details.
 
 ---
 
@@ -52,9 +64,20 @@ python3 train-as-uniformity.py --dataset <dataset> --feat_type _vs_changepoint -
 Here the `dataset` and `dataset_path` refer to the name of the dataset and the path to the dataset directory, respectively. The argument of `vs` refers to the component we want to use (`fore` for **Comp#1** and `back` for **Comp#2**). The argument `name` can be replaced by any suitable project name. 
 
 The hyperparameters used here are not exactly for reproducing the results. For more details about the settings, experiments and hyperparamters please refer to [our original paper](https://arxiv.org/abs/2410.23008).
-## 4. Automatically Annotating the New Classes
 
-To be uploaded soon.
+## 4. Automatically Annotating the New Classes
+### 4.1 Retrieve Top-k Agreement Score Samples
+i. Run **`retrieve_top-k_samples.ipynb`** to retrieve the **top k samples** with the highest agreement scores in each class for each task.  
+
+ii. Then, use **`load_top-k_samples.py`** to **load the corresponding audio samples**.
+
+### 4.2 Obtain YAMNet Classification Results
+i. Use **`sound_classification_discovered_tasks.py`** to get **YAMNet classification results** for the loaded audio samples.
+
+### 4.3 Compute Sample Distribution Per Label
+i. Run **`sum_samples_per_label.py`** to compute the **number of samples per label** for each class in each task.  
+
+ii. The output file, **`sum_samples_per_task.csv`**, can be used to calculate the **clarity of each task** for different labels.
 
 ---
 ## Citations

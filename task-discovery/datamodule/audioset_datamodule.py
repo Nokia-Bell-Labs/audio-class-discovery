@@ -24,7 +24,7 @@ from collections import Counter
 
 import sys
 
-# TODO Set to the appropriate path to audioset dataset
+# TODO: Set to the appropriate path to audioset dataset
 AUDIOSET_DATASET_DIR = 'YOUR_AUDIO_DIR'
 # CLASS_NAME_TO_TASK_ID: {'original':0, 'pop_music': 1, 'classical_music': 2, 'outside_urban_or_manmade': 3}
 
@@ -65,12 +65,12 @@ class MyAudiosetDataset(Dataset):
         
         if len(self.FEATURE_TYPE) != 0:
             # filename in meta csv file for processed audio is the exact file name without the file extension.
-            image_file = os.path.join(AUDIOSET_DATASET_DIR, f"mel_{self.FEATURE_TYPE}", self.CLASS_NAME,
+            image_file = os.path.join(AUDIOSET_DATASET_DIR, f"mfcc_{self.FEATURE_TYPE}", self.CLASS_NAME,
                                     self.metadata.iloc[index, 0] + '.png')
         else:
             # No processing case.
             # filename in meta csv file for original audio is file ID.
-            image_file = os.path.join(AUDIOSET_DATASET_DIR, f"mel", self.CLASS_NAME,
+            image_file = os.path.join(AUDIOSET_DATASET_DIR, f"mfcc", self.CLASS_NAME,
                                     self.metadata.iloc[index, 0] + '_' + self.metadata.iloc[index, 1] + '.png')
         image = Image.open(image_file)
 
@@ -228,9 +228,9 @@ class AudiosetDataModule(pl.LightningDataModule):
             print(
                 f'[AudiosetDatamodule] ===> dataset_path is {dataset_path}')
             if feat_type == 'original':
-                all_files = os.listdir(f'{dataset_path}/mel/{self.class_name}')
+                all_files = os.listdir(f'{dataset_path}/mfcc/{self.class_name}')
             else: # For specific feature types
-                all_files = os.listdir(f'{dataset_path}/mel{feat_type}/{self.class_name}')
+                all_files = os.listdir(f'{dataset_path}/mfcc{feat_type}/{self.class_name}')
             
             img_files = [f for f in all_files if f.endswith('.png')]
             
@@ -369,28 +369,28 @@ class AudiosetDataModule(pl.LightningDataModule):
 
             if self.feat_type == 'original':
                 for img_file, target in zip(train_data, train_targets):
-                    source_path = os.path.join(dataset_path, 'mel', self.selective, img_file)
+                    source_path = os.path.join(dataset_path, 'mfcc', self.selective, img_file)
                     destination_path = os.path.join(train_dir_path, str(target), img_file)
                     shutil.copyfile(source_path, destination_path)
                 for img_file, target in zip(test_data, test_targets):
-                    source_path = os.path.join(dataset_path, 'mel', self.selective, img_file)
+                    source_path = os.path.join(dataset_path, 'mfcc', self.selective, img_file)
                     destination_path = os.path.join(test_dir_path, str(target), img_file)
                     shutil.copyfile(source_path, destination_path)
                 for img_file, target in zip(val_data, val_targets):
-                    source_path = os.path.join(dataset_path, 'mel', self.selective, img_file)
+                    source_path = os.path.join(dataset_path, 'mfcc', self.selective, img_file)
                     destination_path = os.path.join(val_dir_path, str(target), img_file)
                     shutil.copyfile(source_path, destination_path)
             else:
                 for img_file, target in zip(train_data, train_targets):
-                    source_path = os.path.join(dataset_path, f'mel{self.feat_type}', self.selective, img_file)
+                    source_path = os.path.join(dataset_path, f'mfcc{self.feat_type}', self.selective, img_file)
                     destination_path = os.path.join(train_dir_path, str(target), img_file)
                     shutil.copyfile(source_path, destination_path)
                 for img_file, target in zip(test_data, test_targets):
-                    source_path = os.path.join(dataset_path, f'mel{self.feat_type}', self.selective, img_file)
+                    source_path = os.path.join(dataset_path, f'mfcc{self.feat_type}', self.selective, img_file)
                     destination_path = os.path.join(test_dir_path, str(target), img_file)
                     shutil.copyfile(source_path, destination_path)
                 for img_file, target in zip(val_data, val_targets):
-                    source_path = os.path.join(dataset_path, f'mel{self.feat_type}', self.selective, img_file)
+                    source_path = os.path.join(dataset_path, f'mfcc{self.feat_type}', self.selective, img_file)
                     destination_path = os.path.join(val_dir_path, str(target), img_file)
                     shutil.copyfile(source_path, destination_path)
             

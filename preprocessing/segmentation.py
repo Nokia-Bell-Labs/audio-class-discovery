@@ -33,10 +33,40 @@ def ensure_directory_exists(directory_path):
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
 
-def segment_by_change_point(audio_dir, audio_file_name, output_audio_dir, output_image_dir):
-    signal, sampling_rate = librosa.load(audio_dir + '/' + audio_file_name)
+def pad_audio_to_10_seconds(audio, sr):
+    target_length = 10 * sr  # 10 seconds in samples
+    if len(audio) < target_length:
+        pad_length = target_length - len(audio)
+        pad_left = pad_length // 2
+        pad_right = pad_length - pad_left
+        audio = np.pad(audio, (pad_left, pad_right), mode='constant', constant_values=0)
+    return audio
+
+def compute_mfcc(audio, sr):
+    hop_length = int(0.01 * sr)  # 10 ms overlap
+    win_length = int(0.025 * sr)  # 25 ms window
+    n_mels = 64  # 64 mel frequency bands
+    n_mfcc = 64  # Extract 64 MFCC coefficients
+
+    # Compute STFT and convert to power spectrogram
+    S = librosa.stft(audio, n_fft=win_length, hop_length=hop_length, win_length=win_length)
+    S_power = np.abs(S) ** 2  # Compute power spectrogram
+
+    # Apply Mel filter banks
+    mel_spec = librosa.feature.melspectrogram(S=S_power, sr=sr, n_mels=n_mels)
+
+    # Convert to log scale (log-mel spectrogram)
+    mel_log = librosa.power_to_db(mel_spec, ref=np.max)
+
+    # Compute MFCCs from the log-mel spectrogram
+    mfcc = librosa.feature.mfcc(S=mel_log, sr=sr, n_mfcc=n_mfcc)
+
+    return mfcc
+
+def segment_by_change_point(audio_dir, audio_file_name, output_audio_dir, output_mfcc_dir):
+    signal, sampling_rate = librosa.load(os.path.join(audio_dir, audio_file_name), sr=None)
     if len(signal) == 0:
-        print(f"file {audio_file_name} is empty.")
+        print(f"File {audio_file_name} is empty.")
         return
     # Compute the onset strength
     hop_length_tempo = 512 # 256
@@ -50,6 +80,7 @@ def segment_by_change_point(audio_dir, audio_file_name, output_audio_dir, output
         hop_length=hop_length_tempo,
     )
 
+    # Change point detection
     algo = rpt.KernelCPD(kernel="rbf").fit(tempogram.T)
     bkps = algo.predict(pen=45)
     bkps_times = librosa.frames_to_time(bkps, sr=sampling_rate, hop_length=hop_length_tempo)
@@ -59,21 +90,19 @@ def segment_by_change_point(audio_dir, audio_file_name, output_audio_dir, output
         rpt.utils.pairwise([0] + bkps_time_indexes), start=1
     ):
         segment = signal[start:end]
+        segment = pad_audio_to_10_seconds(segment, sampling_rate)
         #print(f"Segment n°{segment_number} (duration: {segment.size/sampling_rate:.2f} s)")
+        
         ensure_directory_exists(output_audio_dir)
         sf.write(f'{output_audio_dir}/{audio_file_name[:-4]}_segment' + str(segment_number) + '.wav', segment, sampling_rate, 'PCM_16')
         
-        # Generate and save Mel spectrogram for the segment
-        ensure_directory_exists(output_image_dir)
-        S = librosa.feature.melspectrogram(y=segment, sr=sampling_rate)
-        plt.figure(figsize=(10, 4))
-        librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
-                                 sr=sampling_rate, hop_length=hop_length_tempo,
-                                 y_axis='mel', fmax=8000, x_axis='time')
-        plt.colorbar(format='%+2.0f dB')
-        plt.title(f'Mel Spectrogram of Segment {segment_number}')
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_image_dir, f'{audio_file_name[:-4]}_segment{segment_number}.png'))
+        # Compute and save mfcc for each segment
+        mfcc = compute_mfcc(segment, sampling_rate)
+        ensure_directory_exists(output_mfcc_dir)
+        plt.figure(figsize=(10, 10))
+        librosa.display.specshow(mfcc, cmap='viridis')
+        plt.axis('off')
+        plt.savefig(os.path.join(output_mfcc_dir, f"{audio_file_name[:-4]}_segment{segment_number}.png"))
         plt.close()
     
 
@@ -111,8 +140,11 @@ if __name__ == "__main__":
 
                 # Set paths
                 output_audio_dir = os.path.join(YOUR_AUDIO_DIR, f'audio_{DIR_TO_READ}_changepoint', class_display_name)
-                output_image_dir = os.path.join(YOUR_AUDIO_DIR, f'mel_{DIR_TO_READ}_changepoint', class_display_name)
-
+                output_image_dir = os.path.join(YOUR_AUDIO_DIR, f'mfcc_{DIR_TO_READ}_changepoint', class_display_name)
+                
+                ensure_directory_exists(output_audio_dir)
+                ensure_directory_exists(output_image_dir)
+                
                 for audio_file_name in tqdm(audio_files, desc="Processing audio files"):
                     segment_by_change_point(audio_dir, audio_file_name, output_audio_dir, output_image_dir)
 
